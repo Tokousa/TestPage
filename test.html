@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アルバイト採用コスト計算ツール</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        .calculator {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .input-field {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4a6cf7;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3a5cd8;
+        }
+        .results {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-top: 20px;
+            border-left: 4px solid #4a6cf7;
+        }
+        .result-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 24px;
+            color: #2d3748;
+        }
+        h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #2d3748;
+        }
+        h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .highlight {
+            background-color: #e6f0ff;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: 500;
+            margin-top: 15px;
+        }
+        .bold {
+            font-weight: 700;
+        }
+        .savings-section {
+            margin-top: 30px;
+            background-color: #f0fff4;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #48bb78;
+        }
+        .savings-title {
+            color: #2f855a;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .error {
+            color: #e53e3e;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .input-field {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>アルバイト採用コスト計算ツール</h1>
+        <div class="input-group">
+            <div class="input-field">
+                <label for="totalPartTimers">アルバイト総数</label>
+                <input type="number" id="totalPartTimers" value="1000" min="1">
+            </div>
+            <div class="input-field">
+                <label for="recruitmentCostPerPerson">1人あたり採用コスト（円）</label>
+                <input type="number" id="recruitmentCostPerPerson" value="30000" min="0">
+            </div>
+            <div class="input-field">
+                <label for="currentTurnoverRate">現在の月間離職率（%）</label>
+                <input type="number" id="currentTurnoverRate" value="30" min="0" max="100">
+            </div>
+        </div>
+        <div class="input-group" id="improvedRateGroup">
+            <div class="input-field">
+                <label for="improvedTurnoverRate">改善後の月間離職率（%）</label>
+                <input type="number" id="improvedTurnoverRate" value="20" min="0" max="100">
+                <div id="rateError" class="error"></div>
+            </div>
+        </div>
+        <button id="calculateBtn">計算する</button>
+    </div>
+
+    <div id="results" class="results" style="display: none;">
+        <h2>計算結果</h2>
+        <div class="result-item">
+            <h3>現在の状況</h3>
+            <p>月間離職率: <span id="currentRate"></span>%</p>
+            <p>1人あたりの平均在籍期間: <span id="currentMonths"></span>ヶ月</p>
+            <p>年間必要採用人数: <span id="currentHires"></span>人</p>
+            <p>年間採用コスト: <span id="currentCost"></span></p>
+        </div>
+
+        <div class="result-item">
+            <h3>改善後の状況</h3>
+            <p>月間離職率: <span id="improvedRate"></span>%</p>
+            <p>1人あたりの平均在籍期間: <span id="improvedMonths"></span>ヶ月</p>
+            <p>年間必要採用人数: <span id="improvedHires"></span>人</p>
+            <p>年間採用コスト: <span id="improvedCost"></span></p>
+        </div>
+
+        <div class="savings-section">
+            <h3 class="savings-title">削減効果</h3>
+            <p>離職率削減幅: <span id="rateDifference"></span>%ポイント</p>
+            <p>採用コスト削減額: <span id="costSavings"></span></p>
+            <p>採用コスト削減率: <span id="costSavingsPercent"></span>%</p>
+            <p class="highlight">
+                離職率が<span id="summaryCurrentRate" class="bold"></span>%から<span id="summaryImprovedRate" class="bold"></span>%に改善された場合、<br>
+                年間<span id="summarySavings" class="bold"></span>の採用コスト削減効果があります。
+            </p>
+        </div>
+
+        <div class="highlight">
+            <p>
+                <span class="bold">方程式：</span><br>
+                T = 12xyz （現在のコスト）<br>
+                T' = 12xyz' （改善後のコスト）<br>
+                S = 12xy(z-z') （削減額）<br>
+                R = (z-z')/z （削減率）<br>
+                <br>
+                x: アルバイト総数 = <span id="eqTotalPartTimers"></span>人<br>
+                y: 1人あたり採用コスト = <span id="eqRecruitmentCost"></span>円<br>
+                z: 現在の月間離職率 = <span id="eqCurrentRate"></span><br>
+                z': 改善後の月間離職率 = <span id="eqImprovedRate"></span><br>
+            </p>
+        </div>
+    </div>
+
+    <!-- Big.js ライブラリの読み込み -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/big.js/6.2.1/big.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calculateBtn = document.getElementById('calculateBtn');
+            calculateBtn.addEventListener('click', calculateResults);
+
+            // 初期計算を実行
+            calculateResults();
+
+            function calculateResults() {
+                try {
+                    // 入力値の取得
+                    const totalPartTimers = new Big(document.getElementById('totalPartTimers').value || '0');
+                    const recruitmentCostPerPerson = new Big(document.getElementById('recruitmentCostPerPerson').value || '0');
+                    const currentTurnoverRate = new Big(document.getElementById('currentTurnoverRate').value || '0');
+                    const improvedTurnoverRate = new Big(document.getElementById('improvedTurnoverRate').value || '0');
+                    
+                    // エラーチェック
+                    const rateError = document.getElementById('rateError');
+                    if (improvedTurnoverRate.gte(currentTurnoverRate)) {
+                        rateError.textContent = '改善後の離職率は現在の離職率より低く設定してください';
+                        return;
+                    } else {
+                        rateError.textContent = '';
+                    }
+
+                    // 現在の状況の計算
+                    const hundred = new Big('100');
+                    const twelve = new Big('12');
+                    const one = new Big('1');
+
+                    const currentRateDecimal = currentTurnoverRate.div(hundred);
+                    const currentMonths = one.div(currentRateDecimal);
+                    const currentAnnualHires = totalPartTimers.times(twelve).times(currentRateDecimal);
+                    const currentAnnualCost = currentAnnualHires.times(recruitmentCostPerPerson);
+
+                    // 改善後の状況の計算
+                    const improvedRateDecimal = improvedTurnoverRate.div(hundred);
+                    const improvedMonths = one.div(improvedRateDecimal);
+                    const improvedAnnualHires = totalPartTimers.times(twelve).times(improvedRateDecimal);
+                    const improvedAnnualCost = improvedAnnualHires.times(recruitmentCostPerPerson);
+
+                    // 削減効果の計算
+                    const rateDifference = currentTurnoverRate.minus(improvedTurnoverRate);
+                    const costSavings = currentAnnualCost.minus(improvedAnnualCost);
+                    const costSavingsPercent = costSavings.div(currentAnnualCost).times(hundred);
+
+                    // 結果の表示
+                    document.getElementById('currentRate').textContent = currentTurnoverRate.toString();
+                    document.getElementById('currentMonths').textContent = currentMonths.toFixed(2);
+                    document.getElementById('currentHires').textContent = formatNumber(currentAnnualHires);
+                    document.getElementById('currentCost').textContent = formatCurrency(currentAnnualCost);
+
+                    document.getElementById('improvedRate').textContent = improvedTurnoverRate.toString();
+                    document.getElementById('improvedMonths').textContent = improvedMonths.toFixed(2);
+                    document.getElementById('improvedHires').textContent = formatNumber(improvedAnnualHires);
+                    document.getElementById('improvedCost').textContent = formatCurrency(improvedAnnualCost);
+
+                    document.getElementById('rateDifference').textContent = rateDifference.toString();
+                    document.getElementById('costSavings').textContent = formatCurrency(costSavings);
+                    document.getElementById('costSavingsPercent').textContent = costSavingsPercent.toFixed(1);
+
+                    document.getElementById('summaryCurrentRate').textContent = currentTurnoverRate.toString();
+                    document.getElementById('summaryImprovedRate').textContent = improvedTurnoverRate.toString();
+                    document.getElementById('summarySavings').textContent = formatCurrency(costSavings);
+
+                    // 方程式の変数を表示
+                    document.getElementById('eqTotalPartTimers').textContent = formatNumber(totalPartTimers);
+                    document.getElementById('eqRecruitmentCost').textContent = formatNumber(recruitmentCostPerPerson);
+                    document.getElementById('eqCurrentRate').textContent = currentRateDecimal.toFixed(2);
+                    document.getElementById('eqImprovedRate').textContent = improvedRateDecimal.toFixed(2);
+
+                    // 結果を表示
+                    document.getElementById('results').style.display = 'block';
+                } catch (error) {
+                    console.error('計算エラー:', error);
+                    alert('計算中にエラーが発生しました: ' + error.message);
+                }
+            }
+
+            function formatNumber(bigNum) {
+                // Big.js の値を数値に変換し、フォーマット
+                return new Intl.NumberFormat('ja-JP').format(Math.round(bigNum.toNumber()));
+            }
+
+            function formatCurrency(bigNum) {
+                // 万円表示用
+                const tenThousand = new Big('10000');
+                const millions = bigNum.div(tenThousand);
+                const hundred = new Big('100');
+                
+                if (millions.gte(hundred)) {
+                    // 億円表示
+                    const billions = millions.div(tenThousand);
+                    return `${billions.toFixed(2)}億円 (${formatNumber(bigNum)}円)`;
+                } else {
+                    return `${millions.toFixed(2)}万円 (${formatNumber(bigNum)}円)`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
